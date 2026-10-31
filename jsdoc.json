@@ -1,6 +1,6 @@
 {
 	"plugins": ["plugins/markdown"],
 	"opts": {
-		"template": "modern-jsdoc-template/default"
+		"template": "node_modules/modern-jsdoc-template/default"
 	}
 }
