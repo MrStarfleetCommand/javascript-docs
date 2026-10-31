@@ -49,7 +49,7 @@ jobs:
               JS_FILES+=("$FILENAME")
           done
 
-          npx jsdoc -c jsdoc.json -d memory-alpha "${JS_FILES[@]}"
+          npx jsdoc -c jsdoc.json -d memory-alpha -R memory-alpha.md "${JS_FILES[@]}"
           rm "${JS_FILES[@]}"
 
       - name: Set up pages
