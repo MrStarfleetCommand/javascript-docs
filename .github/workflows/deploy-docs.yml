@@ -1,0 +1,52 @@
+name: Generate and Deploy JSDoc
+
+on:
+  # Runs automatically every day at midnight UTC
+  schedule:
+    - cron: '0 0 * * *'
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install JSDoc globally
+        run: npm install -g jsdoc
+
+      - name: Generate Memory Alpha documentation
+        run: |
+          rm -rf memory-alpha
+          mkdir -p memory-alpha
+          RESPONSE=$(curl -s "https://memory-alpha.fandom.com/api.php?action=query&errorformat=plaintext&generator=categorymembers&gcmtitle=Category:Memory_Alpha_JS&gcmlimit=max&prop=revisions&rvprop=content&rvslots=main&formatversion=2&format=json&maxlag=3")
+          readarray PAGES < <(echo "$RESPONSE" | jq -rc ".query.pages[]")
+          JS_FILES=()
+
+          for PAGE in "${PAGES[@]}"; do
+              FILENAME=$(echo "$PAGE" | jq -r ".title")
+              echo "$PAGE" | jq -r ".revisions[0].slots.main.content" > "$FILENAME"
+              JS_FILES+=("$FILENAME")
+          done
+
+          jsdoc -d memory-alpha "${JS_FILES[@]}"
+          rm "${JS_FILES[@]}"
+
+      - name: Set up pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: './memory-alpha'
+
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v4
